@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"reflect"
 	"slices"
 	"strings"
 )
@@ -60,7 +61,7 @@ func (sources Sources) ResolveSettingWithSource[T any](ctx context.Context, sett
 		setting.Default.asSourcesIfPresent(),
 	)
 
-	for _, candidate := range sourceCandidates {
+	for i, candidate := range sourceCandidates {
 		if candidate == nil {
 			continue
 		}
@@ -82,6 +83,9 @@ func (sources Sources) ResolveSettingWithSource[T any](ctx context.Context, sett
 		if _, fromEnv := candidate.(EnvKey); fromEnv {
 			fallbackSources.warnOfOverriddenStoredValues(ctx, setting.EnvKey(), description, text)
 		}
+		if i >= len(frontendSources) && i < len(frontendSources)+len(otherSources) {
+			setting.warnOfOverriddenEnv(ctx, description, text, value)
+		}
 		return value, candidate, nil
 	}
 	return value, nil, fmt.Errorf("%w for %s", ErrNoSourceProvidedValue, setting.EnvKey())
@@ -96,4 +100,15 @@ func (sources Sources) warnOfOverriddenStoredValues(ctx context.Context, key, de
 			}
 		}
 	}
+}
+
+func (s Setting[T]) warnOfOverriddenEnv(ctx context.Context, description, text string, value T) {
+	envText, err := s.Env.Lookup(ctx, s.EnvKey())
+	if envText = strings.TrimSpace(envText); err != nil || envText == "" {
+		return
+	}
+	if envValue, parseErr := s.Parse(envText); parseErr == nil && reflect.DeepEqual(envValue, value) {
+		return
+	}
+	slog.WarnContext(ctx, fmt.Sprintf("%s sets '%s', which overrides '%s' from %s", description, text, envText, s.Env.Describe(s.EnvKey())))
 }

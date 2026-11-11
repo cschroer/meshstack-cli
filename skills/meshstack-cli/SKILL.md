@@ -60,8 +60,8 @@ A login stores a credential in a profile. A profile also holds an endpoint and a
 
 `MESHSTACK_PROFILE`, `MESHSTACK_WORKSPACE` and a credential in the environment (`MESHSTACK_API_KEY`
 with `MESHSTACK_API_SECRET`, or `MESHSTACK_API_TOKEN`) win over what a login stores, and a
-command warns when they do. Unset them to use the stored profile. To ignore the stored profiles
-instead, as a script or CI job should, point `MESHSTACK_CONFIG_DIR` at a directory of its own.
+command warns when they do. Unset them to use the stored profile. A script or CI job needs no
+profile: it sets `MESHSTACK_ENDPOINT` and a credential.
 
 ```sh
 meshstack auth status -p <profile>       # who, which workspace, until when — check this first
@@ -398,7 +398,8 @@ read the outcome. Poll its runs instead: `meshstack bbrun list --building-block 
 ## Everything else: `meshstack api`
 
 `meshstack api` sends an authenticated, `curl`-like request to any path of the API, with the
-current login. For a meshObject endpoint it picks the latest API version, sets the `Accept` and
+current login. A full URL, such as a self link, chooses its origin as the endpoint, with a warning
+where `MESHSTACK_ENDPOINT` names another one. For a meshObject endpoint it picks the latest API version, sets the `Accept` and
 `Content-Type` headers and fills in a missing `apiVersion` and `kind` of the body itself;
 `--api-version` picks another version. Leave the version out unless you need an older one, so the
 command keeps working when a preview version becomes GA. An answer outside 2xx still prints its

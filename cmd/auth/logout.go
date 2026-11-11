@@ -11,6 +11,7 @@ import (
 	"github.com/meshcloud/meshstack-cli/cmd/internal/prompt"
 	"github.com/meshcloud/meshstack-cli/internal/auth"
 	"github.com/meshcloud/meshstack-cli/internal/profile"
+	"github.com/meshcloud/meshstack-cli/pkg/setting"
 )
 
 func newLogout() *cobra.Command {
@@ -23,15 +24,17 @@ Without --` + internal.ProfileFlag.Name.String() + `, the command asks which of 
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx := cmd.Context()
-			currentProfile, _, err := profile.ResolveProfile(ctx, profile.ResolveProfileOptions{
-				SettingSources: append(internal.SettingSources(), newProfileSelectionSource(prompt.New(cmd.InOrStdin(), cmd.ErrOrStderr()), false)),
-				StoredOnly:     true,
-			})
-			if errors.Is(err, profile.ErrNoStoredProfile) {
-				slog.WarnContext(ctx, "Nothing to log out of: "+err.Error())
+			currentProfile, profiles, err := profile.ResolveProfile(ctx,
+				append(internal.SettingSources(), newProfileSelectionSource(prompt.New(cmd.InOrStdin(), cmd.ErrOrStderr()), false)))
+			if len(profiles.Profiles) == 0 && errors.Is(err, setting.ErrNoSourceProvidedValue) {
+				slog.WarnContext(ctx, "Nothing to log out of: no profile is stored")
 				return nil
 			} else if err != nil {
 				return err
+			}
+			if currentProfile.Name == "" {
+				slog.WarnContext(ctx, "Nothing to log out of: no stored profile is used")
+				return nil
 			}
 			if err := auth.Logout(ctx, currentProfile, internal.ResolveClientOptions()); err != nil {
 				return err

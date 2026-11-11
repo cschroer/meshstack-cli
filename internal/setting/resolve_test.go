@@ -186,3 +186,35 @@ func TestResolveSettingWarnsWhenTheEnvironmentOverridesAStoredValue(t *testing.T
 		assert.Zero(t, storedLookups)
 	})
 }
+
+func TestResolveSettingWarnsWhenASourceOfTheCommandOverridesTheEnvironment(t *testing.T) {
+	endpoint := setting.Setting[string]{Env: "MESHSTACK_TEST_ENDPOINT", Parse: setting.ParseText[string]}
+	url := setting.LookupSource{
+		Description: "the URL https://a.example/api",
+		Func:        func(context.Context) (string, error) { return "https://a.example", nil },
+	}
+	warnings := func(t *testing.T, sources setting.Sources) []string {
+		t.Helper()
+		captured := logs.Capture(t)
+		_, err := sources.ResolveSetting(t.Context(), endpoint)
+		require.NoError(t, err)
+		return captured.Lines(slog.LevelWarn)
+	}
+
+	t.Run("the environment with the same value is not warned of", func(t *testing.T) {
+		t.Setenv(endpoint.EnvKey(), "https://a.example")
+		assert.Empty(t, warnings(t, setting.Sources{url}))
+	})
+
+	t.Run("the environment with another value is warned of", func(t *testing.T) {
+		t.Setenv(endpoint.EnvKey(), "https://b.example")
+		lines := warnings(t, setting.Sources{url})
+		require.Len(t, lines, 1)
+		assert.Contains(t, lines[0], "the URL https://a.example/api sets 'https://a.example', which overrides 'https://b.example' from env MESHSTACK_TEST_ENDPOINT")
+	})
+
+	t.Run("a front end source over the environment is not warned of", func(t *testing.T) {
+		t.Setenv(endpoint.EnvKey(), "https://b.example")
+		assert.Empty(t, warnings(t, setting.Sources{setting.FrontendSource{Source: url}}))
+	})
+}
