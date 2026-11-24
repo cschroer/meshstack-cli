@@ -10,12 +10,12 @@ permissions:
 
 jobs:
   vendor-hash:
-    if: github.actor == 'dependabot[bot]' && startsWith(github.head_ref, 'dependabot/go_modules/')
+    if: github.actor == 'dependabot[bot]' && startsWith(github.head_ref, 'dependabot/go_modules/') # zizmor: ignore[bot-conditions] a person's push to the branch must not get a commit on top
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.head_ref }} # zizmor: ignore[artipacked] the push step needs the persisted token
       - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
       - run: nix develop -c task nix:vendor-hash
 

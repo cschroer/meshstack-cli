@@ -34,6 +34,8 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       # Computed here rather than with docker/metadata-action, to keep the set of pinned
       # actions small.
@@ -43,17 +45,18 @@ jobs:
           # Read through the environment, because a tag name may hold shell metacharacters and
           # ${{ }} would paste them into the script this job runs.
           VERSION_INPUT: ${{ inputs.version }}
+          PR_NUMBER: ${{ github.event.number }}
         run: |
           if [ -n "${VERSION_INPUT}" ]; then
             version="${VERSION_INPUT}"
             tags="${REGISTRY}/${IMAGE_NAMESPACE}/${IMAGE_NAME}:${version}"
             tags="${tags},${REGISTRY}/${IMAGE_NAMESPACE}/${IMAGE_NAME}:latest"
-          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          elif [ "${GITHUB_REF}" = "refs/heads/main" ]; then
             version="main-$(git rev-parse --short HEAD)"
             tags="${REGISTRY}/${IMAGE_NAMESPACE}/${IMAGE_NAME}:main"
             tags="${tags},${REGISTRY}/${IMAGE_NAMESPACE}/${IMAGE_NAME}:${version}"
           else
-            version="pr-${{ github.event.number }}"
+            version="pr-${PR_NUMBER}"
             tags="${REGISTRY}/${IMAGE_NAMESPACE}/${IMAGE_NAME}:${version}"
           fi
           echo "version=${version}" >> "$GITHUB_OUTPUT"

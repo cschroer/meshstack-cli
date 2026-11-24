@@ -81,6 +81,7 @@
 
             go-task
             goreleaser
+            zizmor
           ];
 
           shellHook = ''

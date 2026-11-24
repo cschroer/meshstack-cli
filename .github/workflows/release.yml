@@ -19,6 +19,7 @@ jobs:
         with:
           # Let goreleaser read older tags, which it needs for the changelog.
           fetch-depth: 0
+          persist-credentials: false
       - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
       - name: Run GoReleaser
         run: nix develop -c goreleaser release --clean
@@ -53,7 +54,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    uses: ./.github/workflows/build-image.yml
+    uses: ./.github/workflows/build-image.yml # zizmor: ignore[self-repository] no release has tried the $/ form
     with:
       version: ${{ github.ref_name }}
 
@@ -66,6 +67,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Mint a token for the tap
         id: token
