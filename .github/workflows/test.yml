@@ -25,12 +25,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-      - run: go mod tidy
-      - run: go build -v ./...
+      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
+      - run: nix develop -c task tidy
+      - run: nix develop -c go build -v ./...
       - name: git diff
         run: |
           git diff --compact-summary --exit-code || \
@@ -42,21 +39,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-      # Built here rather than downloaded by the action below: golangci-lint's formatters use the
-      # go/format compiled into the binary, so the formatting they enforce comes from the Go release
-      # that built the linter. The tool directive in go.mod is the single pin.
-      - name: Build the pinned golangci-lint
-        run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
-        with:
-          # The step above already installed it; the action is here for the annotations it puts on
-          # the pull request diff, which a bare `run:` does not produce.
-          install-mode: none
+      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
+      - run: nix develop -c task lint
       - name: Suggest fix command on failure
         if: failure()
         run: |
@@ -68,11 +52,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-      - run: go tool govulncheck ./...
+      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
+      - run: nix develop -c task vuln
 
   test:
     name: Go Test
@@ -80,15 +61,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
-        with:
-          go-version-file: 'go.mod'
-          cache: true
+      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
       # Binary coverage data (GOCOVERDIR format) rather than a text profile, because only the
       # binary form merges with the acceptance run's coverage. `-coverpkg=./...` has to match what
       # meshfed-release runs the acceptance suite with, or the merged figure is a ratio over two
       # different denominators.
       - name: Run unit tests with gotestsum
+        shell: nix develop -c bash -eo pipefail {0}
         run: |
           mkdir -p covdata/unit
           go tool gotestsum --junitfile junit.xml --format testdox -- \
@@ -108,6 +87,7 @@ jobs:
 
       - name: Report unit coverage
         if: always()
+        shell: nix develop -c bash -eo pipefail {0}
         run: |
           if ! ls covdata/unit/covmeta.* >/dev/null 2>&1; then
             echo "Unit coverage: no data produced." >> "$GITHUB_STEP_SUMMARY"
