@@ -2,16 +2,15 @@
   description = "meshStack CLI";
 
   inputs = {
-    # nixpkgs-unstable rather than nixos-unstable: the former only advances once the Darwin
-    # builds pass as well, and a flake reference spelled out in full does not depend on the
-    # consumer's flake registry.
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    # The stable release that carries go 1.27. A flake reference spelled out in full does not
+    # depend on the consumer's flake registry.
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
   };
 
   outputs = { self, nixpkgs }:
     let
-      # No x86_64-darwin: nixpkgs 26.11 dropped it, so this flake cannot build for Intel Macs.
-      # The release archives still cover them.
+      # No x86_64-darwin: nixpkgs 26.05 is the last release that supports it. The release
+      # archives cover Intel Macs.
       supportedSystems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
       forEachSupportedSystem = f: nixpkgs.lib.genAttrs supportedSystems (system: f {
         pkgs = import nixpkgs { inherit system; };
