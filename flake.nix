@@ -68,7 +68,7 @@
         meshstack-cli = meshstackPackage final;
       };
 
-      devShells = forEachSupportedSystem ({ pkgs }: {
+      devShells = forEachSupportedSystem ({ pkgs }: rec {
         default = pkgs.mkShell {
           packages = with pkgs; [
             # go 1.27 (pinned, in lock-step with go.mod and with terraform-provider-meshstack)
@@ -81,11 +81,6 @@
 
             go-task
             goreleaser
-
-            vhs
-            # VHS starts the first bash on PATH, and docs/demo/demo.tape recalls a command line
-            # with the up arrow, which needs readline. The bash of stdenv is built without it.
-            bashInteractive
           ];
 
           shellHook = ''
@@ -93,6 +88,16 @@
             # With auto, a newer go line in go.mod would download and run another Go than this one.
             export GOTOOLCHAIN=local
           '';
+        };
+
+        demo = pkgs.mkShell {
+          inputsFrom = [ default ];
+          packages = with pkgs; [
+            vhs
+            # VHS starts the first bash on PATH, and docs/demo/demo.tape recalls a command line
+            # with the up arrow, which needs readline. The bash of stdenv is built without it.
+            bashInteractive
+          ];
         };
       });
     };

@@ -71,6 +71,9 @@ tasks:
 
   docs:demo:
     desc: Record docs/demo.gif and docs/profile.gif with VHS, see docs/demo/README.md
+    preconditions:
+      - sh: command -v vhs
+        msg: "vhs is not on PATH. Enter the demo shell with 'nix develop .#demo' and run the task there."
     cmds:
       - vhs docs/demo/demo.tape
       - vhs docs/demo/profile.tape
