@@ -11,13 +11,17 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  # No `name:`, unlike test.yml's jobs: nothing gates on this check. The gating check is
-  # "Acceptance Tests (meshStack backend)", which meshfed-release posts.
+  # Nothing gates on this check. The gating check is "Acceptance Tests (meshStack backend)",
+  # which meshfed-release posts.
   request:
+    name: Request Acceptance Tests
     runs-on: ubuntu-latest
     env:
       SATELLITE_REF: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.ref || github.ref_name }}
@@ -48,8 +52,8 @@ jobs:
           # The secret holds the numeric app id, not a client id: the action reads `client-id` or
           # the deprecated `app-id` into one value, and GitHub takes either as the JWT issuer. The
           # name stays because it is an organization secret every satellite reads.
-          client-id: ${{ secrets.SATELLITE_GH_APP_ID }}
-          private-key: ${{ secrets.SATELLITE_GH_APP_PRIVATE_KEY }}
+          client-id: ${{ secrets.SATELLITE_GH_APP_ID }} # zizmor: ignore[secrets-outside-env] an organization secret every satellite reads
+          private-key: ${{ secrets.SATELLITE_GH_APP_PRIVATE_KEY }} # zizmor: ignore[secrets-outside-env] an organization secret every satellite reads
           owner: meshcloud
           repositories: meshfed-release
           permission-actions: write

@@ -5,15 +5,18 @@ on:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
 
-permissions:
-  contents: read
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   goreleaser:
     name: GoReleaser
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # goreleaser creates the release and uploads the archives
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -26,7 +29,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # The winget section of .goreleaser.yml says how to set up this secret.
-          JANNYMESHI_WINGET_PKGS_TOKEN: ${{ secrets.JANNYMESHI_WINGET_PKGS_TOKEN }}
+          JANNYMESHI_WINGET_PKGS_TOKEN: ${{ secrets.JANNYMESHI_WINGET_PKGS_TOKEN }} # zizmor: ignore[secrets-outside-env] a repository secret that belongs to no environment
 
       # goreleaser only logs a failed winget pull request and still succeeds, so this step fails
       # the job instead. The branch name must match winget.repository.branch in .goreleaser.yml.
@@ -53,7 +56,7 @@ jobs:
     needs: [ goreleaser ]
     permissions:
       contents: read
-      packages: write
+      packages: write # build-image.yml pushes the image to GHCR
     uses: ./.github/workflows/build-image.yml # zizmor: ignore[self-repository] no release has tried the $/ form
     with:
       version: ${{ github.ref_name }}
@@ -74,8 +77,8 @@ jobs:
         id: token
         uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
         with:
-          client-id: ${{ secrets.HOMEBREW_TAP_APP_CLIENT_ID }}
-          private-key: ${{ secrets.HOMEBREW_TAP_APP_PRIVATE_KEY }}
+          client-id: ${{ secrets.HOMEBREW_TAP_APP_CLIENT_ID }} # zizmor: ignore[secrets-outside-env] a repository secret that belongs to no environment
+          private-key: ${{ secrets.HOMEBREW_TAP_APP_PRIVATE_KEY }} # zizmor: ignore[secrets-outside-env] a repository secret that belongs to no environment
           owner: meshcloud
           repositories: homebrew-tap
           permission-contents: write

@@ -25,13 +25,19 @@ on:
       - 'go.sum'
       - '**/*.go'
 
+permissions: {}
+
+concurrency:
+  group: build-image-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build:
     name: Build and push image
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
+      packages: write # pushes the image to GHCR
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

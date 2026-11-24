@@ -12,8 +12,7 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -23,6 +22,8 @@ jobs:
   build:
     name: Go Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -45,6 +46,8 @@ jobs:
     needs: [ build ]
     name: Go Lint and Format Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -65,17 +68,21 @@ jobs:
   zizmor:
     name: Workflow Security Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
-      - run: nix develop -c zizmor --offline --format=github .
+      - run: nix develop -c zizmor --offline --persona=auditor --format=github .
 
   govulncheck:
     needs: [ build ]
     name: Go Vulnerability Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -93,6 +100,8 @@ jobs:
     name: Go Test
     needs: [ build ]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -109,10 +118,9 @@ jobs:
       # meshfed-release runs the acceptance suite with, or the merged figure is a ratio over two
       # different denominators.
       - name: Run unit tests with gotestsum
-        shell: nix develop -c bash -eo pipefail {0}
         run: |
           mkdir -p covdata/unit
-          go tool gotestsum --junitfile junit.xml --format testdox -- \
+          nix develop -c go tool gotestsum --junitfile junit.xml --format testdox -- \
             -coverpkg=./... ./... -args -test.gocoverdir="$PWD/covdata/unit"
 
       # meshfed-release finds this by the pull request head sha, so it has to be uploaded from a run
@@ -129,11 +137,10 @@ jobs:
 
       - name: Report unit coverage
         if: always()
-        shell: nix develop -c bash -eo pipefail {0}
         run: |
           if ! ls covdata/unit/covmeta.* >/dev/null 2>&1; then
             echo "Unit coverage: no data produced." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
-          go tool covdata textfmt -i=covdata/unit -o=unit.txt
-          echo "Unit coverage: $(go tool cover -func=unit.txt | tail -1 | awk '{print $NF}')" >> "$GITHUB_STEP_SUMMARY"
+          nix develop -c go tool covdata textfmt -i=covdata/unit -o=unit.txt
+          echo "Unit coverage: $(nix develop -c go tool cover -func=unit.txt | tail -1 | awk '{print $NF}')" >> "$GITHUB_STEP_SUMMARY"

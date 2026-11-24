@@ -4,14 +4,20 @@ name: Dependabot vendorHash
 on:
   pull_request:
 
-permissions:
-  contents: write
-  actions: write
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   vendor-hash:
+    name: Update vendorHash
     if: github.actor == 'dependabot[bot]' && startsWith(github.head_ref, 'dependabot/go_modules/') # zizmor: ignore[bot-conditions] a person's push to the branch must not get a commit on top
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # pushes the vendorHash commit to the pull request branch
+      actions: write # dispatches the workflows that check the pushed commit
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
