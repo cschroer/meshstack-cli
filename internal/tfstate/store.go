@@ -7,9 +7,10 @@ import (
 	"encoding/json/jsontext"
 	"errors"
 	"fmt"
-	"uuid"
+	"net/url"
 
 	"github.com/meshcloud/meshstack-cli/client/http"
+	"github.com/meshcloud/meshstack-cli/client/types/xurl"
 	"github.com/meshcloud/meshstack-cli/internal/json"
 )
 
@@ -18,24 +19,25 @@ var ErrNoState = errors.New("no state")
 
 var ErrNoLock = errors.New("no lock")
 
-// Requester is implemented by client.RawClient.
-type Requester interface {
-	DoRequest(ctx context.Context, method, path string, opts ...http.RequestOption) ([]byte, error)
-}
-
 type Store struct {
-	BuildingBlock uuid.UUID
+	BuildingBlock string
 	Workspace     string
 
-	raw Requester
+	client http.AuthorizedClient
+	state  *url.URL
 }
 
-func NewStore(raw Requester, workspace string, buildingBlock uuid.UUID) Store {
-	return Store{BuildingBlock: buildingBlock, Workspace: workspace, raw: raw}
+// NewStore must address the state as stateEndpointFormat in
+// ../building-block-runner/internal/executor/tf/tfcmd.go does.
+func NewStore(client http.AuthorizedClient, endpoint xurl.URL, workspace string, buildingBlock string) Store {
+	return Store{
+		BuildingBlock: buildingBlock, Workspace: workspace, client: client,
+		state: endpoint.JoinPath("api", "terraform", "state", "workspace", workspace, "buildingBlock", buildingBlock),
+	}
 }
 
 func (s Store) Get(ctx context.Context) ([]byte, error) {
-	state, err := s.do(ctx, http.MethodGet, s.path())
+	state, err := s.do(ctx, http.MethodGet, s.state)
 	if httpErr, ok := errors.AsType[http.Error](err); ok && httpErr.IsNotFound() {
 		return nil, ErrNoState
 	}
@@ -45,12 +47,12 @@ func (s Store) Get(ctx context.Context) ([]byte, error) {
 // Put and Delete send the ID of tofu's lock as tofu's http backend does, because meshStack refuses
 // a write without the ID of the lock it holds.
 func (s Store) Put(ctx context.Context, state []byte, lockId string) error {
-	_, err := s.do(ctx, http.MethodPost, s.path(), withLockId(lockId, jsonBody(state)...)...)
+	_, err := s.do(ctx, http.MethodPost, s.state, withLockId(lockId, jsonBody(state)...)...)
 	return s.wrap("store", err)
 }
 
 func (s Store) Delete(ctx context.Context, lockId string) error {
-	_, err := s.do(ctx, http.MethodDelete, s.path(), withLockId(lockId)...)
+	_, err := s.do(ctx, http.MethodDelete, s.state, withLockId(lockId)...)
 	return s.wrap("delete", err)
 }
 
@@ -64,19 +66,19 @@ func withLockId(lockId string, opts ...http.RequestOption) []http.RequestOption 
 // Lock and Unlock take tofu's lock info as tofu sends it. A Lock that meshStack refuses with 423
 // is an [http.Error] that carries the lock info of the holder.
 func (s Store) Lock(ctx context.Context, info []byte) error {
-	_, err := s.do(ctx, http.MethodPost, s.lockPath(), jsonBody(info)...)
+	_, err := s.do(ctx, http.MethodPost, s.state.JoinPath("lock"), jsonBody(info)...)
 	return s.wrap("lock", err)
 }
 
 // Unlock fails with a 423 of meshStack where meshStack holds a lock of another ID than the one in
 // info.
 func (s Store) Unlock(ctx context.Context, info []byte) error {
-	_, err := s.do(ctx, http.MethodDelete, s.lockPath(), jsonBody(info)...)
+	_, err := s.do(ctx, http.MethodDelete, s.state.JoinPath("lock"), jsonBody(info)...)
 	return s.wrap("unlock", err)
 }
 
 func (s Store) ReadLock(ctx context.Context) (lock Lock, err error) {
-	read, err := s.do(ctx, http.MethodGet, s.lockPath())
+	read, err := s.do(ctx, http.MethodGet, s.state.JoinPath("lock"))
 	if httpErr, ok := errors.AsType[http.Error](err); ok && httpErr.IsNotFound() {
 		return lock, ErrNoLock
 	} else if err != nil {
@@ -85,12 +87,12 @@ func (s Store) ReadLock(ctx context.Context) (lock Lock, err error) {
 	return lock, json.Unmarshal(read, &lock)
 }
 
-func (s Store) do(ctx context.Context, method, path string, opts ...http.RequestOption) ([]byte, error) {
+func (s Store) do(ctx context.Context, method string, target *url.URL, opts ...http.RequestOption) ([]byte, error) {
 	if method != http.MethodGet {
 		// A 423 goes back to tofu at once, which names the holder of the lock and waits itself.
 		opts = append(opts, http.Retryable(http.RetryOnBusy))
 	}
-	return s.raw.DoRequest(ctx, method, path, opts...)
+	return http.ReadAllBody(s.client.DoRequest(ctx, method, target, opts...))
 }
 
 func (s Store) wrap(action string, err error) error {
@@ -98,16 +100,6 @@ func (s Store) wrap(action string, err error) error {
 		return nil
 	}
 	return fmt.Errorf("cannot %s the state of building block %s in workspace %s: %w", action, s.BuildingBlock, s.Workspace, err)
-}
-
-// path must match EP_State in ../building-block-runner/tf-block-runner/tfrun/runapi.go, the address
-// that the runner's backend uses. meshfed's TfHttpStateController serves it.
-func (s Store) path() string {
-	return fmt.Sprintf("/api/terraform/state/workspace/%s/buildingBlock/%s", s.Workspace, s.BuildingBlock)
-}
-
-func (s Store) lockPath() string {
-	return s.path() + "/lock"
 }
 
 // jsonBody sends no body for an empty one, as tofu's force-unlock sends it.

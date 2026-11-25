@@ -6,7 +6,6 @@ import (
 	gohttp "net/http"
 	"strings"
 	"testing"
-	"uuid"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,7 +37,7 @@ func newTestRunAction(t *testing.T, server *fakemeshstack.Server, answers string
 	require.NoError(t, err)
 	var asked bytes.Buffer
 	return runAction{
-		meshStack: meshStack, prompt: prompt.New(strings.NewReader(answers), &asked), buildingBlockUuid: uuid.MustParse(buildingBlockUuid),
+		meshStack: meshStack, prompt: prompt.New(strings.NewReader(answers), &asked), buildingBlockUuid: buildingBlockUuid,
 		out: io.Discard, format: internal.OutputJson,
 	}, &asked
 }
@@ -52,7 +51,7 @@ func TestApproveRunApprovesOnlyThePlanItShowed(t *testing.T) {
 		`"spec": {"runNumber": 2, "behavior": "APPLY", "buildingBlock": {"uuid": "`+buildingBlockUuid+`", "spec": {"displayName": "my-block"}}}, `+
 		`"_links": {"predecessor": {"href": "`+runsPath+planRun+`"}, "approve": {"href": "`+runsPath+waitingRun+`/approve"}}}`)
 	server := fakemeshstack.Start(t, fakemeshstack.Options{
-		BuildingBlocks: []any{meshObject(t, `{"metadata": {"uuid": "`+buildingBlockUuid+`"}, "status": {"action": "APPROVE_RUN"}, `+
+		BuildingBlocks: []any{meshObject(t, `{"metadata": {"uuid": "`+buildingBlockUuid+`"}, "status": {"action": "APPROVE_RUN", "latestRunUuid": "`+waitingRun+`"}, `+
 			`"_links": {"latestRun": {"href": "`+runsPath+waitingRun+`"}}}`)},
 		BuildingBlockRuns: []any{run, meshObject(t, `{"metadata": {"uuid": "`+planRun+`"}, "status": "SUCCEEDED", `+
 			`"_links": {"downloadLogs": {"href": "`+runsPath+planRun+`/logs"}}}`)},

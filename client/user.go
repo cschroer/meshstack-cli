@@ -1,12 +1,5 @@
 package client
 
-import (
-	"context"
-
-	"github.com/meshcloud/meshstack-cli/client/http"
-	"github.com/meshcloud/meshstack-cli/client/internal"
-)
-
 type MeshUser struct {
 	Metadata MeshUserMetadata `json:"metadata" tfsdk:"metadata"`
 	Spec     MeshUserSpec     `json:"spec" tfsdk:"spec"`
@@ -35,7 +28,7 @@ type MeshUserLifecycle struct {
 	State string `json:"state" tfsdk:"state"`
 }
 
-type MeshUserListFilter struct {
+type MeshUserFilter struct {
 	Uuid                string `json:"uuid"`
 	Username            string `json:"username"`
 	Email               string `json:"email"`
@@ -45,23 +38,8 @@ type MeshUserListFilter struct {
 	ProjectIdentifier   string `json:"projectIdentifier"`
 }
 
-type MeshUserClient interface {
-	List(ctx context.Context, filter MeshUserListFilter) ([]MeshUser, error)
-	Read(ctx context.Context, username string) (*MeshUser, error)
-}
+type MeshUserClient = MeshObjectClient[MeshUser, MeshUserFilter]
 
-type meshUserClient struct {
-	meshObject internal.MeshObjectClient[MeshUser]
-}
-
-func newUserClient(ctx context.Context, httpClient internal.HttpClient) meshUserClient {
-	return meshUserClient{internal.NewMeshObjectClient[MeshUser](ctx, httpClient, "v2")}
-}
-
-func (c meshUserClient) List(ctx context.Context, filter MeshUserListFilter) ([]MeshUser, error) {
-	return c.meshObject.List(ctx, http.WithUrlQuery(filter))
-}
-
-func (c meshUserClient) Read(ctx context.Context, username string) (*MeshUser, error) {
-	return c.meshObject.Get(ctx, username)
+func (user MeshUser) meshObjectId() string {
+	return user.Metadata.Name
 }

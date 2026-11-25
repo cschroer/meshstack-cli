@@ -8,11 +8,11 @@ import (
 	"net/url"
 	"testing"
 	"time"
-	"uuid"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/meshcloud/meshstack-cli/client"
 	"github.com/meshcloud/meshstack-cli/client/http"
 	"github.com/meshcloud/meshstack-cli/client/types/xurl"
 	"github.com/meshcloud/meshstack-cli/internal/auth"
@@ -223,7 +223,7 @@ func TestARefreshFinishesAndIsCachedThoughItsContextIsCancelledMidway(t *testing
 		Name: "slow", Endpoint: xurl.MustParsef("%s", server.URL), Credential: credential.ApiKeyName,
 		ConfigDir: config.Directory(t.TempDir()),
 	}
-	apiKey := &credential.ApiKey{Endpoint: p.Endpoint, ClientId: uuid.MustParse(testApiKey1.ClientId), ClientSecret: testApiKey1.ClientSecret}
+	apiKey := &credential.ApiKey{Endpoint: p.Endpoint, ClientId: testApiKey1.ClientId, ClientSecret: testApiKey1.ClientSecret}
 	creds, err := p.Credentials(t.Context())
 	require.NoError(t, err)
 	creds.Set(apiKey)
@@ -238,7 +238,7 @@ func TestARefreshFinishesAndIsCachedThoughItsContextIsCancelledMidway(t *testing
 	require.NoError(t, err)
 	listed := make(chan error, 1)
 	go func() {
-		_, err := c.Workspace.List(ctx)
+		_, err := c.Workspace.List(ctx, client.NoFilter{})
 		listed <- err
 	}()
 	<-requested

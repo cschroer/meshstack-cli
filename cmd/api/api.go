@@ -77,7 +77,7 @@ To see what the API docs say about the request, run the same command line with '
 			for key, values := range r.header {
 				options = append(options, http.WithHeader(key, values...))
 			}
-			answer, err := meshStack.Raw.DoRequest(ctx, r.method, r.target.Path, options...)
+			answer, err := http.ReadAllBody(meshStack.HttpClient.DoRequest(ctx, r.method, meshStack.Endpoint.JoinPath(r.target.Path), options...))
 			if httpErr, ok := errors.AsType[client.HttpError](err); ok {
 				if writeErr := writeAnswer(cmd.OutOrStdout(), httpErr.ResponseBody); writeErr != nil {
 					return writeErr

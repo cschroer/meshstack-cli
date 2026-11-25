@@ -87,7 +87,7 @@ func readAsTheProvider() error {
 	if err != nil {
 		return err
 	}
-	block, err := meshStack.Raw.DoRequest(ctx, http.MethodGet, "/api/meshobjects/meshbuildingblocks/"+buildingBlockUuid)
+	block, err := http.ReadAllBody(meshStack.HttpClient.DoRequest(ctx, http.MethodGet, meshStack.Endpoint.JoinPath("/api/meshobjects/meshbuildingblocks/"+buildingBlockUuid)))
 	fmt.Print(string(block))
 	return err
 }

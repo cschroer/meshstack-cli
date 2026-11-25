@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"uuid"
 
 	"github.com/meshcloud/meshstack-cli/client/http"
 	"github.com/meshcloud/meshstack-cli/client/types/xurl"
@@ -15,8 +14,8 @@ var _ Credential = &ApiKey{}
 
 type ApiKey struct {
 	Endpoint     xurl.URL
-	ClientId     uuid.UUID `json:"client_id"`
-	ClientSecret string    `json:"client_secret"`
+	ClientId     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
 
 	Cache *struct {
 		Token jwt.JWT `json:"token,omitzero"`
@@ -42,8 +41,8 @@ func (apiKey *ApiKey) RefreshCachedToken(ctx context.Context, client http.Client
 	loginEndpoint := apiKey.Endpoint.JoinPath("api", "login")
 
 	payload := struct {
-		ClientId     uuid.UUID `json:"clientId"`
-		ClientSecret string    `json:"clientSecret"`
+		ClientId     string `json:"clientId"`
+		ClientSecret string `json:"clientSecret"`
 	}{apiKey.ClientId, apiKey.ClientSecret}
 
 	answer, err := http.UnmarshalJsonBody[struct {

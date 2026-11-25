@@ -165,7 +165,7 @@ func (o *firstObjects) get(ctx context.Context, r getRequest, operation openapi.
 	if mediaType, ok := operation.LatestMediaType(); ok {
 		options = append(options, http.WithHeader("Accept", mediaType.Name))
 	}
-	body, err := o.meshStack.Raw.DoRequest(ctx, gohttp.MethodGet, r.path, options...)
+	body, err := http.ReadAllBody(o.meshStack.HttpClient.DoRequest(ctx, gohttp.MethodGet, o.meshStack.Endpoint.JoinPath(r.path), options...))
 	if httpErr, ok := errors.AsType[client.HttpError](err); ok {
 		return httpErr.StatusCode, string(httpErr.ResponseBody), nil
 	}

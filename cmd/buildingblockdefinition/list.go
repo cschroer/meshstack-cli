@@ -37,7 +37,11 @@ func list(cmd *cobra.Command, flags *internal.ListFlags, includeAllPublished boo
 	if cmd.Flags().Changed(internal.WorkspaceFlag.Name.String()) {
 		ownedByWorkspace = new(internal.WorkspaceFlag.Value)
 	}
-	return flags.Run[client.MeshBuildingBlockDefinition](cmd, client.MeshBuildingBlockDefinitionListFilter{
+	meshStack, err := internal.ResolveClient(cmd.Context())
+	if err != nil {
+		return err
+	}
+	return flags.Run(cmd, meshStack.BuildingBlockDefinition, client.MeshBuildingBlockDefinitionFilter{
 		OwnedByWorkspace:    ownedByWorkspace,
 		IncludeAllPublished: includeAllPublished,
 	})

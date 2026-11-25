@@ -1,12 +1,5 @@
 package client
 
-import (
-	"context"
-
-	"github.com/meshcloud/meshstack-cli/client/http"
-	"github.com/meshcloud/meshstack-cli/client/internal"
-)
-
 type MeshWorkspaceUserGroup struct {
 	Metadata MeshWorkspaceUserGroupMetadata `json:"metadata" tfsdk:"metadata"`
 	Spec     MeshWorkspaceUserGroupSpec     `json:"spec" tfsdk:"spec"`
@@ -19,12 +12,8 @@ type MeshWorkspaceUserGroupMetadata struct {
 	SourceSystem     *string `json:"sourceSystem,omitzero" tfsdk:"source_system"`
 }
 
-func (m MeshWorkspaceUserGroupMetadata) Identifier() string {
-	return MeshWorkspaceUserGroupIdentifier(m.OwnedByWorkspace, m.Name)
-}
-
-func MeshWorkspaceUserGroupIdentifier(ownedByWorkspace, name string) string {
-	return ownedByWorkspace + "." + name
+func NewMeshWorkspaceUserGroupId(workspace, name string) string {
+	return workspace + "." + name
 }
 
 type MeshWorkspaceUserGroupSpec struct {
@@ -38,44 +27,14 @@ type MeshWorkspaceUserGroupStatus struct {
 	DisabledUsernames []string `json:"disabledUsernames" tfsdk:"disabled_usernames"`
 }
 
-type MeshWorkspaceUserGroupListFilter struct {
+type MeshWorkspaceUserGroupFilter struct {
 	WorkspaceIdentifier string `json:"workspaceIdentifier"`
 	Username            string `json:"username"`
 	SourceSystem        string `json:"sourceSystem"`
 }
 
-type MeshWorkspaceUserGroupClient interface {
-	List(ctx context.Context, filter MeshWorkspaceUserGroupListFilter) ([]MeshWorkspaceUserGroup, error)
-	Read(ctx context.Context, ownedByWorkspace, name string) (*MeshWorkspaceUserGroup, error)
-	Create(ctx context.Context, group *MeshWorkspaceUserGroup) (*MeshWorkspaceUserGroup, error)
-	Update(ctx context.Context, group *MeshWorkspaceUserGroup) (*MeshWorkspaceUserGroup, error)
-	Delete(ctx context.Context, ownedByWorkspace, name string) error
-}
+type MeshWorkspaceUserGroupClient = MeshObjectClient[MeshWorkspaceUserGroup, MeshWorkspaceUserGroupFilter]
 
-type meshWorkspaceUserGroupClient struct {
-	meshObject internal.MeshObjectClient[MeshWorkspaceUserGroup]
-}
-
-func newWorkspaceUserGroupClient(ctx context.Context, httpClient internal.HttpClient) meshWorkspaceUserGroupClient {
-	return meshWorkspaceUserGroupClient{internal.NewMeshObjectClient[MeshWorkspaceUserGroup](ctx, httpClient, "v1")}
-}
-
-func (c meshWorkspaceUserGroupClient) List(ctx context.Context, filter MeshWorkspaceUserGroupListFilter) ([]MeshWorkspaceUserGroup, error) {
-	return c.meshObject.List(ctx, http.WithUrlQuery(filter))
-}
-
-func (c meshWorkspaceUserGroupClient) Read(ctx context.Context, ownedByWorkspace, name string) (*MeshWorkspaceUserGroup, error) {
-	return c.meshObject.Get(ctx, MeshWorkspaceUserGroupIdentifier(ownedByWorkspace, name))
-}
-
-func (c meshWorkspaceUserGroupClient) Create(ctx context.Context, group *MeshWorkspaceUserGroup) (*MeshWorkspaceUserGroup, error) {
-	return c.meshObject.Post(ctx, group)
-}
-
-func (c meshWorkspaceUserGroupClient) Update(ctx context.Context, group *MeshWorkspaceUserGroup) (*MeshWorkspaceUserGroup, error) {
-	return c.meshObject.Put(ctx, group.Metadata.Identifier(), group)
-}
-
-func (c meshWorkspaceUserGroupClient) Delete(ctx context.Context, ownedByWorkspace, name string) error {
-	return c.meshObject.Delete(ctx, MeshWorkspaceUserGroupIdentifier(ownedByWorkspace, name))
+func (group MeshWorkspaceUserGroup) meshObjectId() string {
+	return NewMeshWorkspaceUserGroupId(group.Metadata.OwnedByWorkspace, group.Metadata.Name)
 }

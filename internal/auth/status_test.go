@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"testing"
 	"time"
-	"uuid"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -68,7 +67,7 @@ func TestStatusOfABrowserLogin(t *testing.T) {
 	t.Run("lists the stored credentials besides the one in use", func(t *testing.T) {
 		creds, err := p.Credentials(t.Context())
 		require.NoError(t, err)
-		creds.Set(&credential.ApiKey{Endpoint: p.Endpoint, ClientId: uuid.MustParse(testApiKey2.ClientId), ClientSecret: testApiKey2.ClientSecret})
+		creds.Set(&credential.ApiKey{Endpoint: p.Endpoint, ClientId: testApiKey2.ClientId, ClientSecret: testApiKey2.ClientSecret})
 		require.NoError(t, creds.Store(t.Context()))
 
 		assert.Equal(t, []auth.UnusedCredential{{Kind: credential.ApiKeyName, ClientId: testApiKey2.ClientId}}, status(t).Unused)
@@ -86,7 +85,7 @@ func TestStatusOfAnApiKeyIsReadFromFilesAndTheEnvironment(t *testing.T) {
 
 	assert.Equal(t, []string{"env MESHSTACK_API_KEY", "env MESHSTACK_API_SECRET"}, status.Sources)
 	require.NotNil(t, status.ApiKey)
-	assert.Equal(t, testApiKey1.ClientId, status.ApiKey.ClientId.String())
+	assert.Equal(t, testApiKey1.ClientId, status.ApiKey.ClientId)
 	assert.Nil(t, status.Token, "no token is cached before the key is first used")
 	assert.Empty(t, captured.Records(slog.LevelWarn))
 }

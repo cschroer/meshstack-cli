@@ -213,7 +213,7 @@ func assertApiKey(t *testing.T, p *Profile, clientId, clientSecret string) {
 	creds, err := p.Credentials(t.Context())
 	require.NoError(t, err)
 	require.NotNil(t, creds.ApiKey)
-	assert.Equal(t, clientId, creds.ApiKey.ClientId.String())
+	assert.Equal(t, clientId, creds.ApiKey.ClientId)
 	assert.Equal(t, clientSecret, creds.ApiKey.ClientSecret)
 }
 

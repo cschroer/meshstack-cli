@@ -1,4 +1,4 @@
-package variant
+package polymorph
 
 import (
 	"encoding/json/jsontext"
@@ -47,22 +47,6 @@ func (v Variant[X, Y]) HasX() bool {
 
 func (v Variant[X, Y]) HasY() bool {
 	return has[Y](v.Y)
-}
-
-func (v Variant[X, Y]) WithX(action func(x *X)) {
-	if v.HasX() {
-		action(&v.X)
-	} else {
-		action(nil)
-	}
-}
-
-func (v Variant[X, Y]) WithY(action func(y *Y)) {
-	if v.HasY() {
-		action(&v.Y)
-	} else {
-		action(nil)
-	}
 }
 
 func (v *Variant[X, Y]) UnmarshalJSONFrom(dec *jsontext.Decoder) error {

@@ -125,7 +125,7 @@ func (s Session) resolveWorkspaceForLogin(ctx context.Context, opts ResolveSessi
 		if err != nil {
 			return r, err
 		}
-		r.Items, err = c.Workspace.List(ctx)
+		r.Items, err = c.Workspace.List(ctx, client.NoFilter{})
 		if httpError, ok := errors.AsType[http.Error](err); ok && httpError.IsForbidden() {
 			slog.DebugContext(ctx, "meshStack refused the workspace list: "+httpError.Error())
 			err = meshstack.NoWorkspaceToWorkInError{MayNotList: true}

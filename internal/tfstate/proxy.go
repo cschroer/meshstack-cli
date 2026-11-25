@@ -284,7 +284,7 @@ func (p *Proxy) write(w gohttp.ResponseWriter, r *gohttp.Request) {
 			p.refuse(w, r, gohttp.StatusInternalServerError, fmt.Errorf("cannot back up the stored state, so it stays as it is: %w", err))
 			return
 		}
-		slog.InfoContext(ctx, "Saved the stored state of building block "+p.Store.BuildingBlock.String()+" to "+path)
+		slog.InfoContext(ctx, "Saved the stored state of building block "+p.Store.BuildingBlock+" to "+path)
 	}
 
 	lockId := r.URL.Query().Get("ID")
