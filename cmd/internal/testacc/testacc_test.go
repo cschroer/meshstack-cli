@@ -146,7 +146,7 @@ func (c *cli) environ() []string {
 // no test can import, and adds only persistent flags, which this suite sets through the environment.
 func newRootCommand() *cobra.Command {
 	root := &cobra.Command{Use: "meshstack", SilenceUsage: true}
-	root.AddCommand(api.New(), auth.New(), auth.NewLoginShortcut(),
+	root.AddCommand(api.New(), api.NewDocs(), auth.New(), auth.NewLoginShortcut(),
 		buildingblock.New(), buildingblockdefinition.New(), buildingblockdefinitionversion.New(),
 		buildingblockrun.New(), eventlog.New(), profile.New(), workspace.New())
 	return root

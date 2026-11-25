@@ -549,6 +549,7 @@ linters:
           files:
             - "$test"
             - "!**/client/http/*_test.go"
+            - "!**/cmd/internal/testacc/*_test.go"
           list-mode: strict
           allow:
             - $gostd
@@ -566,6 +567,21 @@ linters:
             - github.com/spf13/cobra
             - github.com/spf13/pflag
             - github.com/stretchr/testify
+
+        # The API docs scenario breaks the connection to meshStack, as the tests of client/http do.
+        tests-testacc:
+          files:
+            - "**/cmd/internal/testacc/*_test.go"
+          list-mode: strict
+          allow:
+            - $gostd
+            - encoding/json/jsontext
+            - github.com/meshcloud/meshstack-cli
+            - github.com/spf13/cobra
+            - github.com/stretchr/testify
+            - github.com/Shopify/toxiproxy/v2
+            # toxiproxy.NewServer takes a zerolog.Logger, and zerolog.Nop() is the only use
+            - github.com/rs/zerolog
 
         # client/http breaks connections on purpose, which toxiproxy does in process.
         tests-client-http:

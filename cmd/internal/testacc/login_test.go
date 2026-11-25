@@ -269,6 +269,7 @@ func TestAccApiKeyLogin(t *testing.T) {
 	t.Run("every list command answers", everyListCommandAnswers(c))
 	t.Run("every GET operation answers the API key", everyGetOperationAnswers(c))
 	t.Run("a meshObject endpoint refuses JSON, and api sends --request-json in its media type", apiAsksForJson(c))
+	t.Run("a meshObject endpoint takes a DELETE without a media type", apiDeletesWithNoMediaType(c))
 	t.Run("api picks the profile for the self link of a list answer by its URL alone, with no endpoint in the environment", apiFollowsASelfLink(c))
 	t.Run("a wait ends once the run has ended", waitEndsTheRun(c))
 	t.Run("trigger-run names the run it started", triggerRunNamesTheRunItStarted(c))

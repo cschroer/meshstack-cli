@@ -51,7 +51,7 @@ func ParseMediaType(name string) MediaType {
 // WithKindAndApiVersion adds the kind and apiVersion a meshObject body lacks, in front, as the
 // meshObject API writes them.
 func (m MediaType) WithKindAndApiVersion(body jsontext.Value) (jsontext.Value, error) {
-	if m.Kind == "" || body.Kind() != '{' {
+	if m.Kind == "" || body.Kind() != jsontext.KindBeginObject {
 		return body, nil
 	}
 	var members object

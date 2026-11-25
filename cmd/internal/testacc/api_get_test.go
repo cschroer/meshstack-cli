@@ -6,6 +6,7 @@ import (
 	"encoding/json/jsontext"
 	"errors"
 	"fmt"
+	"log/slog"
 	gohttp "net/http"
 	"net/url"
 	"regexp"
@@ -20,9 +21,11 @@ import (
 	"github.com/meshcloud/meshstack-cli/client"
 	"github.com/meshcloud/meshstack-cli/client/http"
 	"github.com/meshcloud/meshstack-cli/client/openapi"
+	"github.com/meshcloud/meshstack-cli/client/types/xurl"
 	"github.com/meshcloud/meshstack-cli/cmd/internal"
 	"github.com/meshcloud/meshstack-cli/internal/apidocs"
 	"github.com/meshcloud/meshstack-cli/internal/json"
+	"github.com/meshcloud/meshstack-cli/internal/logs"
 	"github.com/meshcloud/meshstack-cli/pkg/auth"
 )
 
@@ -34,6 +37,9 @@ var getExceptions = map[openapi.PathTemplate]getException{
 	},
 	"/api/meshobjects/meshbuildingblockruns": {
 		query: map[string]objectField{"buildingBlockUuid": {"meshBuildingBlock", "uuid"}},
+	},
+	"/api/meshobjects/meshbuildingblockruns/{buildingBlockRun}/artifact": {
+		skip: "answers 403 to a user login; the building block runner's acceptance tests cover it",
 	},
 	"/api/meshobjects/meshbuildingblockruns/{buildingBlockRun}/plan-artifact": {
 		skip: "the API docs say it is in development, and answers 404 in normal operation",
@@ -54,7 +60,7 @@ type objectField struct {
 
 func everyGetOperationAnswers(c *cli) func(*testing.T) {
 	return func(t *testing.T) {
-		spec := devApiDocs(t)
+		spec := c.apiDocsOf(t)
 		objects := firstObjects{spec: spec, meshStack: c.client(t)}
 		gets, err := spec.Select(openapi.Selector{Method: gohttp.MethodGet})
 		require.NoError(t, err)
@@ -98,17 +104,18 @@ func organizationAdmin(t *testing.T, logins []devLogin) organizationAdminLogin {
 	return organizationAdminLogin{}
 }
 
-func devApiDocs(t *testing.T) openapi.Spec {
+func (c *cli) apiDocsOf(t *testing.T) openapi.Spec {
 	t.Helper()
 	t.Setenv(envConfigDir, t.TempDir())
-	spec, wait, err := apidocs.Load(t.Context(), apidocs.Options{
-		Sources: internal.SettingSources(),
-		Client:  internal.ResolveClientOptions().HttpClient(),
-		Version: internal.Version,
-		Dev:     true,
+	captured := logs.Capture(t)
+	spec, err := apidocs.Load(t.Context(), apidocs.Options{
+		Sources:  internal.SettingSources(),
+		Client:   internal.ResolveClientOptions().HttpClient(),
+		Endpoint: xurl.MustParsef("%s", c.endpoint),
+		Version:  internal.Version,
 	})
-	wait()
 	require.NoError(t, err)
+	require.Empty(t, captured.Lines(slog.LevelWarn))
 	return spec
 }
 

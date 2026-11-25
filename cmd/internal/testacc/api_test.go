@@ -26,6 +26,16 @@ func apiAsksForJson(c *cli) func(*testing.T) {
 	}
 }
 
+// The API docs list no version for a delete, so request.negotiate sends no Accept and Content-Type.
+func apiDeletesWithNoMediaType(c *cli) func(*testing.T) {
+	return func(t *testing.T) {
+		output, err := c.run("", "api", "-X", "DELETE", "/api/meshobjects/meshtenants/00000000-0000-4000-8000-000000000000")
+
+		require.ErrorContainsf(t, err, "meshStack answered HTTP 404", "a tenant that does not exist is not found, rather than refused for its headers, output:\n%s", output)
+		assert.NotContains(t, err.Error(), "api-docs", "a 404 on a path the API docs list has no hint to them")
+	}
+}
+
 func apiFollowsASelfLink(c *cli) func(*testing.T) {
 	return func(t *testing.T) {
 		var href string

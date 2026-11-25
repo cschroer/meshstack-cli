@@ -51,8 +51,7 @@ To see what the API docs say about the request, run the same command line with '
 				return err
 			}
 			ctx := cmd.Context()
-			// Resolved before the API docs, whose first download takes a while, so that a missing
-			// login fails at once.
+			// Resolved first, so that a missing login fails before the API docs download.
 			meshStack, err := internal.ResolveClient(ctx, internal.WithSettingSources(r.originAsEndpoint()))
 			if err != nil {
 				return err
@@ -60,8 +59,7 @@ To see what the API docs say about the request, run the same command line with '
 			if r.target.IsAbs() && !strings.EqualFold(r.origin(), meshStack.Endpoint.String()) {
 				return fmt.Errorf("%s is not at the endpoint %s of this command; leave out --%s", r.target.Redacted(), meshStack.Endpoint, internal.EndpointFlag.Name)
 			}
-			spec, wait, err := flags.loadApiDocs(cmd, meshStack.Endpoint)
-			defer wait()
+			spec, err := flags.loadApiDocs(cmd, meshStack.Endpoint)
 			if err != nil {
 				slog.WarnContext(ctx, fmt.Sprintf("Sending the request unchanged, because the API docs are not available: %s. "+
 					"Run %s to see why.", err, docsCommand(cmd, args)))
