@@ -2,7 +2,6 @@ package buildingblock
 
 import (
 	"bytes"
-	"encoding/json/v2"
 	"io"
 	gohttp "net/http"
 	"strings"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/meshcloud/meshstack-cli/cmd/internal"
 	"github.com/meshcloud/meshstack-cli/cmd/internal/prompt"
+	"github.com/meshcloud/meshstack-cli/internal/json"
 	"github.com/meshcloud/meshstack-cli/internal/testutil/fakemeshstack"
 	"github.com/meshcloud/meshstack-cli/internal/testutil/testlogin"
 )

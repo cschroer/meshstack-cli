@@ -39,8 +39,8 @@ type requester struct {
 }
 
 func (r requester) DoRequest(ctx context.Context, method, path string, opts ...http.RequestOption) ([]byte, error) {
-	return http.NewClient(fakemeshstack.UserAgent).WithAuthorization(http.BearerToken(fakemeshstack.Token)).
-		DoRequest[[]byte](ctx, method, r.endpoint.JoinPath(path), opts...)
+	return http.ReadAllBody(http.NewClient(fakemeshstack.UserAgent).WithAuthorization(http.BearerToken(fakemeshstack.Token)).
+		DoRequest(ctx, method, r.endpoint.JoinPath(path), opts...))
 }
 
 type proxyUnderTest struct {
@@ -347,9 +347,8 @@ func TestServeCountsTheRequestsUntilTheCommandEnds(t *testing.T) {
 		var apiToken jwt.JWT
 		require.NoError(t, apiToken.UnmarshalText([]byte(vars["MESHSTACK_API_TOKEN"])), "the provider since v0.26.0 takes only a JWT")
 		assert.False(t, apiToken.GetClaim(jwt.ExpiryClaim).Expired(time.Hour))
-		authorization := gohttp.Header{}
-		authorization.Set("Authorization", "Basic "+basicAuth(vars["TF_HTTP_USERNAME"], vars["TF_HTTP_PASSWORD"]))
-		served, err = http.NewClient(fakemeshstack.UserAgent).DoRequest[[]byte](t.Context(), http.MethodGet, address, http.WithHeaders(authorization))
+		authorization := http.WithHeader("Authorization", "Basic "+basicAuth(vars["TF_HTTP_USERNAME"], vars["TF_HTTP_PASSWORD"]))
+		served, err = http.ReadAllBody(http.NewClient(fakemeshstack.UserAgent).DoRequest(t.Context(), http.MethodGet, address, authorization))
 		require.NoError(t, err)
 	})
 

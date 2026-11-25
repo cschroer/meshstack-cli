@@ -75,46 +75,41 @@ func Load(ctx context.Context, opts Options) (spec openapi.Spec, wait func(), er
 		if err = custom.UnmarshalText([]byte(customEnv)); err != nil {
 			return spec, wait, fmt.Errorf("%s: %w", urlEnv, err)
 		}
-		return opts.download(ctx, custom.URL, dir.Join(fmt.Sprintf("api-docs-custom-%s.json", urlHash(custom.URL))), true)
+		return opts.download(ctx, custom.URL, dir.Join(fmt.Sprintf("api-docs-custom-%s.json", urlHash(custom.URL))))
 	}
 	if opts.Endpoint.URL != nil && !opts.Dev {
 		served := opts.Endpoint.JoinPath("api", "openapi")
-		spec, wait, err = opts.download(ctx, served, dir.Join(fmt.Sprintf("api-docs-%s.json", urlHash(served))), true)
+		spec, wait, err = opts.download(ctx, served, dir.Join(fmt.Sprintf("api-docs-%s.json", urlHash(served))))
 		if httpErr, ok := errors.AsType[http.Error](err); !ok || (!httpErr.IsUnauthorized() && !httpErr.IsNotFound()) {
 			return spec, wait, err
 		}
 		slog.DebugContext(ctx, fmt.Sprintf("%s serves no API docs at /api/openapi, reading those of the docs site", opts.Endpoint))
 	}
 
-	url, path, conditionalGet := releasedUrl, dir.Join("api-docs.json"), false
+	url, path := releasedUrl, dir.Join("api-docs.json")
 	if cliVersion, parseErr := version.Parse(opts.Version); opts.Dev || parseErr != nil || !cliVersion.IsRelease() {
-		url, path, conditionalGet = devUrl, dir.Join("api-docs-dev.json"), true
+		url, path = devUrl, dir.Join("api-docs-dev.json")
 	}
-	return opts.download(ctx, url.URL, path, conditionalGet)
+	return opts.download(ctx, url.URL, path)
 }
 
-// urlHash names one file per URL, because the conditional GET asks only for a document newer than the
-// stored one: after a switch to the docs of an older meshStack, it would keep those of the newer one.
 func urlHash(url *gourl.URL) string {
 	sum := sha256.Sum256([]byte(url.String()))
 	return hex.EncodeToString(sum[:6])
 }
 
-func (opts Options) download(ctx context.Context, url *gourl.URL, path string, conditionalGet bool) (spec openapi.Spec, wait func(), err error) {
-	wait, err = opts.Client.Download(ctx, url, path, http.WithConditionalGet(conditionalGet))
+func (opts Options) download(ctx context.Context, url *gourl.URL, path string) (spec openapi.Spec, wait func(), err error) {
+	wait = func() {}
+	document, err := http.ReadAllBody(opts.Client.DoRequest(ctx, http.MethodGet, url))
 	if err != nil {
 		return spec, wait, fmt.Errorf("cannot download the API docs from %s: %w", url, err)
 	}
-	document, err := os.ReadFile(path) //nolint:gosec // G304: the path is the config directory's, joined above
-	if err != nil {
+	if err = os.WriteFile(path, document, 0o600); err != nil { //nolint:gosec // G703: the path is the config directory's, joined above
 		return spec, wait, err
 	}
 	spec, err = openapi.Parse(bytes.NewReader(document))
 	if err != nil {
-		// Removed, because a conditional GET would keep it for good: a captive portal's page, say,
-		// stored with the time of its download, is newer than the document.
-		return spec, wait, fmt.Errorf("%s: %w, so it is removed for the next command to download again",
-			path, errors.Join(err, os.Remove(path)))
+		return spec, wait, fmt.Errorf("%s: %w", path, err)
 	}
 	return spec, wait, nil
 }

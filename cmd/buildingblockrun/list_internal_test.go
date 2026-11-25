@@ -2,7 +2,6 @@ package buildingblockrun
 
 import (
 	"encoding/json/jsontext"
-	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"iter"
@@ -10,6 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/meshcloud/meshstack-cli/internal/json"
 )
 
 // blockRuns yields a run named block/i, created at the i-th of createdAts, and counts into pulled the

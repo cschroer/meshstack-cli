@@ -3,7 +3,6 @@ package testacc
 import (
 	"context"
 	"crypto/rand"
-	"encoding/json/v2"
 	"fmt"
 	"maps"
 	"os"
@@ -17,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/meshcloud/meshstack-cli/internal/json"
 	"github.com/meshcloud/meshstack-cli/internal/tfstate"
 )
 

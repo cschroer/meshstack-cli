@@ -12,7 +12,6 @@ package fakemeshstack
 import (
 	"bytes"
 	"cmp"
-	"encoding/json/v2"
 	"io"
 	gohttp "net/http"
 	"net/http/httptest"
@@ -25,6 +24,7 @@ import (
 	"time"
 
 	"github.com/meshcloud/meshstack-cli/client/http"
+	"github.com/meshcloud/meshstack-cli/internal/json"
 )
 
 // DefaultVersion is at least client.MinMeshStackVersion, or the CLI refuses the backend.

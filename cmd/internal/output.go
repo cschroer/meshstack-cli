@@ -2,7 +2,6 @@ package internal
 
 import (
 	"encoding/json/jsontext"
-	"encoding/json/v2"
 	"fmt"
 	"io"
 	"iter"
@@ -11,6 +10,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/meshcloud/meshstack-cli/cmd/internal/markdown"
+	"github.com/meshcloud/meshstack-cli/internal/json"
 )
 
 const OutputFlagName = "output"

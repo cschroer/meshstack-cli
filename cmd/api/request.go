@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json/jsontext"
-	"encoding/json/v2"
 	"fmt"
 	gohttp "net/http"
 	"net/url"
@@ -18,6 +17,7 @@ import (
 	"github.com/meshcloud/meshstack-cli/client/types/xurl"
 	"github.com/meshcloud/meshstack-cli/cmd/internal"
 	"github.com/meshcloud/meshstack-cli/internal/apidocs"
+	"github.com/meshcloud/meshstack-cli/internal/json"
 	"github.com/meshcloud/meshstack-cli/internal/meshstack"
 	"github.com/meshcloud/meshstack-cli/internal/setting"
 )
@@ -134,13 +134,9 @@ func (f *requestFlags) selector(r request) (openapi.Selector, error) {
 }
 
 func (f *requestFlags) loadApiDocs(cmd *cobra.Command, endpoint xurl.URL) (openapi.Spec, func(), error) {
-	httpClient, err := internal.ResolveClientOptions().HttpClient()
-	if err != nil {
-		return openapi.Spec{}, func() {}, err
-	}
 	return apidocs.Load(cmd.Context(), apidocs.Options{
 		Sources:  internal.SettingSources(),
-		Client:   httpClient,
+		Client:   internal.ResolveClientOptions().HttpClient(),
 		Endpoint: endpoint,
 		Version:  internal.Version,
 		Dev:      f.dev,

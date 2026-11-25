@@ -4,7 +4,6 @@ import (
 	"cmp"
 	"context"
 	"encoding/json/jsontext"
-	"encoding/json/v2"
 	"errors"
 	"fmt"
 	gohttp "net/http"
@@ -23,6 +22,7 @@ import (
 	"github.com/meshcloud/meshstack-cli/client/openapi"
 	"github.com/meshcloud/meshstack-cli/cmd/internal"
 	"github.com/meshcloud/meshstack-cli/internal/apidocs"
+	"github.com/meshcloud/meshstack-cli/internal/json"
 	"github.com/meshcloud/meshstack-cli/pkg/auth"
 )
 
@@ -101,11 +101,9 @@ func organizationAdmin(t *testing.T, logins []devLogin) organizationAdminLogin {
 func devApiDocs(t *testing.T) openapi.Spec {
 	t.Helper()
 	t.Setenv(envConfigDir, t.TempDir())
-	httpClient, err := internal.ResolveClientOptions().HttpClient()
-	require.NoError(t, err)
 	spec, wait, err := apidocs.Load(t.Context(), apidocs.Options{
 		Sources: internal.SettingSources(),
-		Client:  httpClient,
+		Client:  internal.ResolveClientOptions().HttpClient(),
 		Version: internal.Version,
 		Dev:     true,
 	})
@@ -158,7 +156,7 @@ type listed struct {
 func (o *firstObjects) get(ctx context.Context, r getRequest, operation openapi.Operation) (int, string, error) {
 	options := []http.RequestOption{http.WithUrlQuery(r.query)}
 	if mediaType, ok := operation.LatestMediaType(); ok {
-		options = append(options, http.WithAccept(mediaType.Name))
+		options = append(options, http.WithHeader("Accept", mediaType.Name))
 	}
 	body, err := o.meshStack.Raw.DoRequest(ctx, gohttp.MethodGet, r.path, options...)
 	if httpErr, ok := errors.AsType[client.HttpError](err); ok {

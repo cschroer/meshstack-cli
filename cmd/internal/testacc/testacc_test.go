@@ -2,7 +2,6 @@ package testacc
 
 import (
 	"context"
-	"encoding/json/v2"
 	goio "io"
 	"log/slog"
 	gohttp "net/http"
@@ -25,6 +24,7 @@ import (
 	"github.com/meshcloud/meshstack-cli/cmd/eventlog"
 	"github.com/meshcloud/meshstack-cli/cmd/profile"
 	"github.com/meshcloud/meshstack-cli/cmd/workspace"
+	"github.com/meshcloud/meshstack-cli/internal/json"
 	"github.com/meshcloud/meshstack-cli/pkg/io"
 	"github.com/meshcloud/meshstack-cli/pkg/setting"
 )

@@ -111,10 +111,7 @@ With --%[8]s, exec copies the stored state into that directory before it replace
 			if err != nil {
 				return err
 			}
-			api, err := internal.ResolveClientOptions().HttpClient()
-			if err != nil {
-				return err
-			}
+			api := internal.ResolveClientOptions().HttpClient()
 			var problems []error
 			proxy := &tfstate.Proxy{
 				Store:    store,

@@ -202,9 +202,8 @@ func setApiKeyEnv(t *testing.T, key fakemeshstack.ApiKey) {
 // ask brings its own http.Client, because the session keeps its own to itself. What these tests
 // drive is the authorization, which the session supplies either way.
 func ask(ctx context.Context, server *fakemeshstack.Server, session auth.Session) error {
-	_, err := http.NewClient(fakemeshstack.UserAgent).WithAuthorization(session).
-		DoRequest[[]byte](ctx, gohttp.MethodGet, must(url.Parse(server.URL+"/api/meshobjects/meshworkspaces")))
-	return err
+	return http.IgnoreResponse(http.NewClient(fakemeshstack.UserAgent).WithAuthorization(session).
+		DoRequest(ctx, gohttp.MethodGet, must(url.Parse(server.URL+"/api/meshobjects/meshworkspaces"))))
 }
 
 func requireAnswer(t *testing.T, server *fakemeshstack.Server, session auth.Session) {

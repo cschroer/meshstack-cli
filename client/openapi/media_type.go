@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"cmp"
 	"encoding/json/jsontext"
-	"encoding/json/v2"
 	"fmt"
 	"regexp"
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/meshcloud/meshstack-cli/internal/json"
 )
 
 // Only a hal+json type carries a meshObject: application/vnd.meshcloud.api.meshobjects.v1+json is

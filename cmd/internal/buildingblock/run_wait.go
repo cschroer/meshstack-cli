@@ -5,12 +5,12 @@ package buildingblock
 import (
 	"context"
 	"encoding/json/jsontext"
-	"encoding/json/v2"
 	"fmt"
 	"time"
 	"uuid"
 
 	"github.com/meshcloud/meshstack-cli/client"
+	"github.com/meshcloud/meshstack-cli/internal/json"
 )
 
 const (

@@ -2,7 +2,6 @@ package tfstate
 
 import (
 	"context"
-	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"time"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/meshcloud/meshstack-cli/client"
 	"github.com/meshcloud/meshstack-cli/client/http"
+	"github.com/meshcloud/meshstack-cli/internal/json"
 )
 
 type Lock struct {

@@ -2,10 +2,11 @@ package variant
 
 import (
 	"encoding/json/jsontext"
-	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"reflect"
+
+	"github.com/meshcloud/meshstack-cli/internal/json"
 )
 
 // A Variant decodes one JSON value into X or into Y. When both decode, X wins, so Y can be a type

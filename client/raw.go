@@ -62,15 +62,15 @@ func (r *RawClient) Get[M any](ctx context.Context, uuid uuid.UUID, pathElems ..
 	if err != nil {
 		return nil, err
 	}
-	return api.DoRequest[jsontext.Value](ctx, http.MethodGet, api.ApiUrl.JoinPath(uuid.String()).JoinPath(pathElems...),
-		http.WithAccept(api.MeshObjectMimeType()))
+	return http.UnmarshalJsonBody[jsontext.Value](api.DoRequest(ctx, http.MethodGet, api.ApiUrl.JoinPath(uuid.String()).JoinPath(pathElems...),
+		http.WithHeader("Accept", api.MeshObjectMimeType())))
 }
 
 // DoRequest joins path onto the endpoint, even one that names a host, so that the bearer token
 // never leaves for another host. The answer is of any content type, such as a plan artifact's
 // application/octet-stream, so it is returned unparsed.
 func (r *RawClient) DoRequest(ctx context.Context, method, path string, opts ...http.RequestOption) ([]byte, error) {
-	return r.httpClient.DoRequest[[]byte](ctx, method, r.httpClient.EndpointUrl.JoinPath(path), opts...)
+	return http.ReadAllBody(r.httpClient.DoRequest(ctx, method, r.httpClient.EndpointUrl.JoinPath(path), opts...))
 }
 
 // with makes List and Get reach the objects of M through the API version of meshObject, so that

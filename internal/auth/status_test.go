@@ -2,7 +2,6 @@ package auth_test
 
 import (
 	"encoding/base64"
-	"encoding/json/v2"
 	"log/slog"
 	"testing"
 	"time"
@@ -15,6 +14,7 @@ import (
 	"github.com/meshcloud/meshstack-cli/internal/auth"
 	"github.com/meshcloud/meshstack-cli/internal/auth/credential"
 	"github.com/meshcloud/meshstack-cli/internal/config"
+	"github.com/meshcloud/meshstack-cli/internal/json"
 	"github.com/meshcloud/meshstack-cli/internal/logs"
 	"github.com/meshcloud/meshstack-cli/internal/meshstack"
 	"github.com/meshcloud/meshstack-cli/internal/oidc"
@@ -62,7 +62,7 @@ func TestStatusOfABrowserLogin(t *testing.T) {
 		session, err := auth.StoredSession(t.Context(), p, testSessionOpts)
 		require.NoError(t, err)
 
-		assert.Equal(t, "profile dev working in workspace ops", session.Scope())
+		assert.Equal(t, "oidcLogin profile dev working in workspace ops", session.String())
 	})
 
 	t.Run("lists the stored credentials besides the one in use", func(t *testing.T) {

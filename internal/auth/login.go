@@ -35,10 +35,7 @@ func Login(ctx context.Context, withAuth credential.Name, opts ResolveSessionOpt
 	if err != nil {
 		return Session{}, nil, nil, err
 	}
-	session, err := newSessionFor(ctx, currentProfile, opts)
-	if err != nil {
-		return Session{}, nil, nil, err
-	}
+	session := newSessionFor(ctx, currentProfile, opts)
 
 	var creds profile.Credentials
 	creds, err = session.CurrentProfile.Credentials(ctx)

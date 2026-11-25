@@ -9,7 +9,6 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/json/jsontext"
-	"encoding/json/v2"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -22,6 +21,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/meshcloud/meshstack-cli/internal/json"
 	"github.com/meshcloud/meshstack-cli/internal/testutil/fakemeshstack"
 )
 

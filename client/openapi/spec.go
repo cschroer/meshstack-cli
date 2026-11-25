@@ -4,13 +4,14 @@ package openapi
 
 import (
 	"encoding/json/jsontext"
-	"encoding/json/v2"
 	"fmt"
 	"io"
 	"maps"
 	"regexp"
 	"slices"
 	"strings"
+
+	"github.com/meshcloud/meshstack-cli/internal/json"
 )
 
 // Spec is an OpenAPI document. After Select, it marshals to the selected operations and the

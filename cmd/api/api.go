@@ -72,8 +72,14 @@ To see what the API docs say about the request, run the same command line with '
 				r.header.Set("Content-Type", "application/json")
 			}
 
-			answer, err := meshStack.Raw.DoRequest(ctx, r.method, r.target.Path,
-				http.WithUrlQuery(r.target.Query()), http.WithHeaders(r.header), http.WithBody(r.body))
+			options := []http.RequestOption{http.WithUrlQuery(r.target.Query())}
+			if r.body != nil {
+				options = append(options, http.WithJsonRequest(r.body, r.header.Get("Content-Type")), http.WithHeader("Accept", r.header.Values("Accept")...))
+			}
+			for key, values := range r.header {
+				options = append(options, http.WithHeader(key, values...))
+			}
+			answer, err := meshStack.Raw.DoRequest(ctx, r.method, r.target.Path, options...)
 			if httpErr, ok := errors.AsType[client.HttpError](err); ok {
 				if writeErr := writeAnswer(cmd.OutOrStdout(), httpErr.ResponseBody); writeErr != nil {
 					return writeErr
@@ -83,7 +89,6 @@ To see what the API docs say about the request, run the same command line with '
 					return withHint(fmt.Sprintf("%s. Run %s to see what the API expects",
 						httpErr.Summary(), docsCommand(cmd, args)), httpErr)
 				}
-				// What wraps the HTTP error, such as the auth scope of a 403, stays.
 				return withHint(strings.Replace(err.Error(), httpErr.Error(), httpErr.Summary(), 1), httpErr)
 			}
 			if err != nil {

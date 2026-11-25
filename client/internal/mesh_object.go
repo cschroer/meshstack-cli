@@ -90,7 +90,7 @@ func (c MeshObjectClient[M]) Get(ctx context.Context, id string) (resp *M, err e
 }
 
 func (c MeshObjectApi) GetAtPath[R any](ctx context.Context, id string, extraPath ...string) (R, error) {
-	return c.DoRequest[R](ctx, http.MethodGet, c.ApiUrl.JoinPath(id).JoinPath(extraPath...), http.WithAccept(c.MeshObjectMimeType()))
+	return http.UnmarshalJsonBody[R](c.DoRequest(ctx, http.MethodGet, c.ApiUrl.JoinPath(id).JoinPath(extraPath...), http.WithHeader("Accept", c.MeshObjectMimeType())))
 }
 
 func (c MeshObjectClient[M]) Post[P any](ctx context.Context, payload P) (*M, error) {
@@ -98,12 +98,11 @@ func (c MeshObjectClient[M]) Post[P any](ctx context.Context, payload P) (*M, er
 }
 
 func (c MeshObjectApi) PostAtPath[R, P any](ctx context.Context, payload P, extraPath ...string) (R, error) {
-	return c.DoRequest[R](ctx, http.MethodPost, c.ApiUrl.JoinPath(extraPath...),
-		http.WithAccept(c.MeshObjectMimeType()), c.withMeshObjectPayload(payload))
+	return http.UnmarshalJsonBody[R](c.DoRequest(ctx, http.MethodPost, c.ApiUrl.JoinPath(extraPath...), c.withMeshObjectPayload(payload)))
 }
 
 func (c MeshObjectClient[M]) Put[P any](ctx context.Context, id string, payload P) (*M, error) {
-	return c.DoRequest[*M](ctx, http.MethodPut, c.ApiUrl.JoinPath(id), c.withMeshObjectPayload(payload), http.Retryable())
+	return http.UnmarshalJsonBody[*M](c.DoRequest(ctx, http.MethodPut, c.ApiUrl.JoinPath(id), c.withMeshObjectPayload(payload), http.Retryable(http.RetryOnTransient)))
 }
 
 func (c MeshObjectClient[M]) Delete(ctx context.Context, id string) (err error) {
@@ -111,8 +110,7 @@ func (c MeshObjectClient[M]) Delete(ctx context.Context, id string) (err error) 
 }
 
 func (c MeshObjectApi) DeleteAtPath(ctx context.Context, id string, extraPath ...string) (err error) {
-	_, err = c.DoRequest[any](ctx, http.MethodDelete, c.ApiUrl.JoinPath(id).JoinPath(extraPath...), http.Retryable(), http.WithAccept(c.MeshObjectMimeType()))
-	return
+	return http.IgnoreResponse(c.DoRequest(ctx, http.MethodDelete, c.ApiUrl.JoinPath(id).JoinPath(extraPath...), http.WithHeader("Accept", c.MeshObjectMimeType())))
 }
 
 func (c MeshObjectClient[M]) ListSeq(ctx context.Context, options ...http.RequestOption) iter.Seq2[M, error] {
@@ -165,7 +163,7 @@ type paginatedResponse[T any] struct {
 // withMeshObjectPayload takes P rather than an any because the `,embed` tag takes a struct, a
 // string-keyed map or a jsontext.Value, never an any.
 func (c MeshObjectApi) withMeshObjectPayload[P any](payload P) http.RequestOption {
-	return http.WithJsonPayload(struct {
+	return http.WithJsonRequest(struct {
 		ApiVersion string `json:"apiVersion"`
 		Kind       string `json:"kind"`
 		Payload    P      `json:",embed"`
@@ -177,10 +175,10 @@ func (c MeshObjectApi) getPage[T any](ctx context.Context, listOptions ListOptio
 	if listOptions.PageSize > 0 {
 		query["size"] = listOptions.PageSize
 	}
-	response, err := c.DoRequest[paginatedResponse[T]](ctx, http.MethodGet, c.ApiUrl, append(options,
-		http.WithAccept(c.MeshObjectMimeType()),
+	response, err := http.UnmarshalJsonBody[paginatedResponse[T]](c.DoRequest(ctx, http.MethodGet, c.ApiUrl, append(options,
+		http.WithHeader("Accept", c.MeshObjectMimeType()),
 		http.WithUrlQuery(query),
-	)...)
+	)...))
 	if err != nil && pageNumber > 0 {
 		// The first page fails for what fails the whole list, such as a missing role, and a page
 		// number would only distract from it.

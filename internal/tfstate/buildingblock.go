@@ -2,11 +2,11 @@ package tfstate
 
 import (
 	"context"
-	"encoding/json/v2"
 	"fmt"
 	"uuid"
 
 	"github.com/meshcloud/meshstack-cli/client"
+	"github.com/meshcloud/meshstack-cli/internal/json"
 )
 
 type buildingBlock struct {

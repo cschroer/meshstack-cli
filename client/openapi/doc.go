@@ -3,10 +3,11 @@ package openapi
 import (
 	"cmp"
 	"encoding/json/jsontext"
-	"encoding/json/v2"
 	"fmt"
 	"slices"
 	"strings"
+
+	"github.com/meshcloud/meshstack-cli/internal/json"
 )
 
 // OperationDoc is what the API docs say about an operation, for a person to read.

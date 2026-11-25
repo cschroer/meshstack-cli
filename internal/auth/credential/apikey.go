@@ -46,12 +46,12 @@ func (apiKey *ApiKey) RefreshCachedToken(ctx context.Context, client http.Client
 		ClientSecret string    `json:"clientSecret"`
 	}{apiKey.ClientId, apiKey.ClientSecret}
 
-	answer, err := client.DoRequest[struct {
+	answer, err := http.UnmarshalJsonBody[struct {
 		AccessToken jwt.JWT `json:"access_token"`
-	}](ctx, http.MethodPost, loginEndpoint,
-		http.Retryable(),
-		http.WithJsonPayload(payload, "application/json"),
-	)
+	}](client.DoRequest(ctx, http.MethodPost, loginEndpoint,
+		http.Retryable(http.RetryOnTransient),
+		http.WithJsonRequest(payload, "application/json"),
+	))
 
 	if httpError, ok := errors.AsType[http.Error](err); ok && httpError.IsUnauthorized() {
 		return fmt.Errorf("api key %s at %s refused: %w; check the secret, or issue a new key in meshPanel", apiKey.ClientId, loginEndpoint, err)

@@ -1,7 +1,6 @@
 package testacc
 
 import (
-	"encoding/json/v2"
 	"html"
 	"io"
 	"maps"
@@ -18,6 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/meshcloud/meshstack-cli/internal/json"
 	"github.com/meshcloud/meshstack-cli/pkg/setting"
 )
 

@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"fmt"
-	gohttp "net/http"
 	"net/url"
 
 	"github.com/meshcloud/meshstack-cli/client/http"
@@ -49,7 +48,7 @@ func (c *MeshBuildingBlockRunActionClient) ReadLogs(ctx context.Context, link Li
 // ApproveRun takes the predecessor because meshStack replaces the plan of a run that waits for
 // approval when the run is planned again. The predecessor names the plan that is approved.
 func (c *MeshBuildingBlockRunActionClient) ApproveRun(ctx context.Context, approve Link, predecessorRunUuid string) error {
-	_, err := c.doAtLink[[]byte](ctx, http.MethodPost, approve, http.WithJsonPayload(struct {
+	_, err := c.doAtLink[struct{}](ctx, http.MethodPost, approve, http.WithJsonRequest(struct {
 		PredecessorRunUuid string `json:"predecessorRunUuid"`
 	}{predecessorRunUuid}, c.run.MeshObjectMimeType()))
 	return err
@@ -64,8 +63,7 @@ func (c *MeshBuildingBlockRunActionClient) AbortRun(ctx context.Context, abort L
 }
 
 func (c *MeshBuildingBlockRunActionClient) postWithoutBody(ctx context.Context, link Link) error {
-	_, err := c.doAtLink[[]byte](ctx, http.MethodPost, link,
-		http.WithHeaders(gohttp.Header{"Content-Type": {c.run.MeshObjectMimeType()}}))
+	_, err := c.doAtLink[struct{}](ctx, http.MethodPost, link, http.WithContentType(c.run.MeshObjectMimeType()))
 	return err
 }
 
@@ -84,5 +82,5 @@ func (c *MeshBuildingBlockRunActionClient) doAtLink[R any](ctx context.Context, 
 	}
 	below := c.httpClient.EndpointUrl.JoinPath(path)
 	below.RawQuery = target.RawQuery
-	return c.httpClient.DoRequest[R](ctx, method, below, append(options, http.WithAccept(c.run.MeshObjectMimeType()))...)
+	return http.UnmarshalJsonBody[R](c.httpClient.DoRequest(ctx, method, below, append(options, http.WithHeader("Accept", c.run.MeshObjectMimeType()))...))
 }

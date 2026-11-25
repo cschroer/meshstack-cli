@@ -1,13 +1,13 @@
 package testacc
 
 import (
-	"encoding/json/v2"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/meshcloud/meshstack-cli/client"
+	"github.com/meshcloud/meshstack-cli/internal/json"
 )
 
 // apiAsksForJson checks the answers of meshStack that request.negotiate in cmd/api relies on where

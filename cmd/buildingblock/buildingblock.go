@@ -3,7 +3,6 @@ package buildingblock
 import (
 	"context"
 	"encoding/json/jsontext"
-	"encoding/json/v2"
 	"fmt"
 	"io"
 	"log/slog"
@@ -15,6 +14,7 @@ import (
 	"github.com/meshcloud/meshstack-cli/cmd/buildingblock/tfstate"
 	"github.com/meshcloud/meshstack-cli/cmd/internal"
 	"github.com/meshcloud/meshstack-cli/cmd/internal/prompt"
+	"github.com/meshcloud/meshstack-cli/internal/json"
 )
 
 func New() *cobra.Command {

@@ -3,7 +3,6 @@ package openapi_test
 import (
 	"bytes"
 	"encoding/json/jsontext"
-	"encoding/json/v2"
 	"os"
 	"testing"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/meshcloud/meshstack-cli/client/openapi"
+	"github.com/meshcloud/meshstack-cli/internal/json"
 )
 
 func TestSpec(t *testing.T) {
