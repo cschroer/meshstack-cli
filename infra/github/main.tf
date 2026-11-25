@@ -32,13 +32,13 @@ resource "github_repository_ruleset" "protect_default_branch" {
   bypass_actors {
     actor_id    = 0 # org admin (role-based; GitHub stores 0)
     actor_type  = "OrganizationAdmin"
-    bypass_mode = "always"
+    bypass_mode = "pull_request"
   }
 
   bypass_actors {
     actor_id    = 2 # maintain
     actor_type  = "RepositoryRole"
-    bypass_mode = "always"
+    bypass_mode = "pull_request"
   }
 
   conditions {
@@ -52,15 +52,12 @@ resource "github_repository_ruleset" "protect_default_branch" {
     deletion         = true
     non_fast_forward = true
 
-    # Rebase-only and a linear history, which is what the other meshcloud repositories enforce, are
-    # both impossible here: client/ arrives as a git subtree, and every `git subtree pull` produces
-    # a merge commit that only a merge can land on the default branch.
-    required_linear_history = false
+    required_linear_history = true
 
     pull_request {
       required_approving_review_count   = 1
       required_review_thread_resolution = true
-      allowed_merge_methods             = ["rebase", "merge"]
+      allowed_merge_methods             = ["rebase"]
       dismiss_stale_reviews_on_push     = false
       require_code_owner_review         = false
       require_last_push_approval        = false
